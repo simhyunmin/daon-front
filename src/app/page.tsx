@@ -1,58 +1,79 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from "next/link";
 
-// 임시 데이터
-const volunteerActivities = [
-  {
-    id: 1,
-    title: "지역 공원 청소 봉사",
-    location: "서울시 강남구",
-    date: "2024-04-01",
-    participants: 5,
-    maxParticipants: 10,
-  },
-  {
-    id: 2,
-    title: "노인복지관 급식 봉사",
-    location: "서울시 송파구",
-    date: "2024-04-03",
-    participants: 3,
-    maxParticipants: 8,
-  },
-  // ... 더 많은 임시 데이터
-];
+interface Volunteer {
+  idx: number;
+  title: string;
+  date: string;
+  location: string;
+  description: string;
+  participants: number;
+  maxParticipants: number;
+  createdAt: string;
+}
 
-// 임시 후기 데이터 추가
-const volunteerReviews = [
-  {
-    id: 1,
-    title: "노인복지관에서의 특별한 하루",
-    author: "김다온",
-    date: "2024-03-28",
-    location: "서울시 송파구",
-    likes: 15,
-    preview: "처음에는 걱정이 많았지만, 어르신들과 함께한 시간이 정말 의미있었습니다..."
-  },
-  {
-    id: 2,
-    title: "공원 청소 봉사 후기",
-    author: "이봄봄",
-    date: "2024-03-25",
-    location: "서울시 강남구",
-    likes: 23,
-    preview: "우리 동네 공원을 깨끗하게 만드는데 동참할 수 있어서 뿌듯했습니다..."
-  },
-  {
-    id: 3,
-    title: "유기동물 보호소 봉사 이야기",
-    author: "박하늘",
-    date: "2024-03-22",
-    location: "서울시 마포구",
-    likes: 45,
-    preview: "작은 생명들을 돌보는 시간이 저에게도 큰 위로가 되었습니다..."
-  },
-];
+interface Review {
+  idx: number;
+  volunteerIdx: number;
+  content: string;
+  title: string;
+  author: string;
+  date: string;
+  location: string;
+  likes: number;
+}
 
 export default function Home() {
+  const [volunteerActivities, setVolunteerActivities] = useState<Volunteer[]>([]);
+  const [volunteerReviews, setVolunteerReviews] = useState<Review[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // volunteers API 호출
+        const volunteersRes = await fetch('http://localhost:4999/api/volunteers');
+        const volunteersData = await volunteersRes.json();
+        
+        // 백엔드 응답 구조에 맞게 매핑
+        const mappedVolunteers = volunteersData.map((item: any) => ({
+          idx: item.idx,
+          title: item.title || '제목 없음',
+          date: item.date || '날짜 미정',
+          location: item.location || '위치 미정',
+          description: item.description || '',
+          participants: item.currentParticipants || item.participants || 0,
+          maxParticipants: item.maxParticipants || 0,
+          createdAt: item.createdAt || new Date().toISOString()
+        }));
+        setVolunteerActivities(mappedVolunteers);
+
+        // reviews API 호출
+        const reviewsRes = await fetch('http://localhost:4999/api/reviews');
+        const reviewsData = await reviewsRes.json();
+        
+        // 백엔드 응답 구조에 맞게 매핑
+        const mappedReviews = reviewsData.map((item: any) => ({
+          idx: item.idx,
+          volunteerIdx: item.volunteerIdx,
+          content: item.content || '',
+          title: item.title || item.content?.substring(0, 20) + "..." || "제목 없음",
+          author: item.author || '작성자 미상',
+          date: item.date || new Date().toISOString(),
+          location: item.location || '위치 미정',
+          likes: item.likes || 0
+        }));
+        setVolunteerReviews(mappedReviews);
+
+      } catch (error) {
+        console.error('데이터 로딩 실패:', error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   return (
     <div className="min-h-screen bg-orange-50">
       {/* 네비게이션 바 */}
@@ -98,14 +119,14 @@ export default function Home() {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {volunteerActivities.map((activity) => (
-              <div key={activity.id} className="bg-warm-gray-50 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow border border-amber-100">
+              <div key={activity.idx} className="bg-warm-gray-50 rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow border border-amber-100">
                 <h4 className="text-lg font-semibold text-amber-900 mb-2">{activity.title}</h4>
                 <div className="text-amber-800 space-y-2">
                   <p>📍 {activity.location}</p>
                   <p>📅 {activity.date}</p>
                   <p>👥 {activity.participants}/{activity.maxParticipants}명</p>
                 </div>
-                <Link href={`/volunteer/${activity.id}`}
+                <Link href={`/volunteer/${activity.idx}`}
                   className="mt-4 block text-center bg-orange-100 text-orange-700 px-4 py-2 rounded hover:bg-orange-200">
                   자세히 보기
                 </Link>
@@ -126,7 +147,7 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {volunteerReviews.map((review) => (
               <div 
-                key={review.id} 
+                key={review.idx} 
                 className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow border border-amber-100"
               >
                 <h2 className="text-xl font-semibold text-amber-900 mb-3">
@@ -139,10 +160,10 @@ export default function Home() {
                   <p className="text-sm">❤️ {review.likes}</p>
                 </div>
                 <p className="text-gray-600 mb-4 line-clamp-3">
-                  {review.preview}
+                  {review.content}
                 </p>
                 <Link
-                  href={`/reviews/${review.id}`}
+                  href={`/reviews/${review.idx}`}
                   className="block text-center bg-orange-100 text-orange-700 px-4 py-2 rounded hover:bg-orange-200"
                 >
                   자세히 보기

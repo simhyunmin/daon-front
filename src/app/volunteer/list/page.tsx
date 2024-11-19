@@ -1,41 +1,20 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { volunteerService } from '@/services/volunteerService';
 import Link from "next/link";
 
-// 임시 데이터 (나중에 API로 대체)
-const volunteerActivities = [
-  {
-    id: 1,
-    title: "지역 공원 청소 봉사",
-    location: "서울시 강남구",
-    date: "2024-04-01",
-    participants: 5,
-    maxParticipants: 10,
-    description: "우리 동네 공원을 깨끗하게 만들어요.",
-    category: "환경",
-  },
-  {
-    id: 2,
-    title: "노인복지관 급식 봉사",
-    location: "서울시 송파구",
-    date: "2024-04-03",
-    participants: 3,
-    maxParticipants: 8,
-    description: "어르신들을 위한 따뜻한 식사 준비",
-    category: "복지",
-  },
-  {
-    id: 3,
-    title: "유기동물 보호소 봉사",
-    location: "경기도 성남시",
-    date: "2024-04-05",
-    participants: 2,
-    maxParticipants: 6,
-    description: "유기동물들의 건강한 생활을 위한 봉사",
-    category: "동물보호",
-  },
-  // 더 많은 데이터...
-];
-
 export default function VolunteerList() {
+  const [activities, setActivities] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchActivities = async () => {
+      const response = await volunteerService.getVolunteers();
+      setActivities(response);
+    };
+    fetchActivities();
+  }, []);
+
   return (
     <div className="min-h-screen bg-orange-50">
       {/* 네비게이션 바 */}
@@ -89,7 +68,7 @@ export default function VolunteerList() {
 
         {/* 봉사활동 목록 */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {volunteerActivities.map((activity) => (
+          {activities.map((activity) => (
             <div 
               key={activity.id} 
               className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow border border-amber-100"
